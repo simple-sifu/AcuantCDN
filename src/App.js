@@ -1,18 +1,8 @@
 import React, {Component} from 'react';
 // import '@babel/polyfill';
-import {Switch, Route, Redirect} from 'react-router-dom';
-import { ConnectedRouter } from 'connected-react-router'
-import {PersistGate} from 'redux-persist/es/integration/react';
-import {isMobile} from "react-device-detect";
-import {Provider} from 'react-redux';
-import CapturePhoto from './screens/CapturePhoto';
-import EulaPage from './screens/Eula';
-import CaptureSelfie from './screens/CaptureSelfie';
-import Results from './screens/Results/index';
-import Error from './screens/Error/index';
+// import CapturePhotoPlain from './screens/CapturePhotoPlain';
 import "./styles/main.css";
-import ProcessedImageResult from "./screens/ProcessedImageResult";
-import AcuantReactCamera from "./screens/AcuantReactCamera";
+
 /*
 global Raven
  */
@@ -20,6 +10,7 @@ global Raven
 class App extends Component {
 
     constructor(props){
+        console.log("App constructor");
         super(props);
         this.state = {
             isAcuantSdkLoaded: false
@@ -30,29 +21,9 @@ class App extends Component {
 
 
     componentDidMount() {
-        if (process.env.REACT_APP_SENTRY_SUBSCRIPTION_ID && process.env.REACT_APP_SENTRY_SUBSCRIPTION_ID.length > 0) {
-            Raven.config(process.env.REACT_APP_SENTRY_SUBSCRIPTION_ID).install()
-        }
+        console.log("App componentDidMount");
+        this.loadScript();
 
-        if (process.env.REACT_APP_MOBILE_ONLY === 'true') {
-            if (!isMobile) {
-                this.props.routerHistory.replace('/error/mobileonly');
-                document.body.classList.add('mobile-only');
-                this.setState({isAcuantSdkLoaded: true});
-            } else {
-                if (!this.props.config) {
-                    this.props.routerHistory.replace('/');
-                }
-                this.loadScript();
-            }
-        } else {
-            if (!this.props.config) {
-                this.props.routerHistory.replace('/');
-            }
-            this.loadScript();
-        }
-        
-  
     }
 
     loadScript(){
@@ -109,20 +80,24 @@ class App extends Component {
     }
 
     initialize(){
+        console.log("App initialize");
         if(!this.isInitialized && !this.isIntializing){
             this.isIntializing = true;
             window.AcuantJavascriptWebSdk.initialize(
                 (function(){
                     if(process.env.NODE_ENV === 'development'){
+                        console.log("App initialize: btoa");
                         return btoa(`${process.env.REACT_APP_USER_NAME}:${process.env.REACT_APP_PASSWORD}`);
                     }
                     else{
+                        console.log("App initialize: Auth Token");
                         return process.env.REACT_APP_AUTH_TOKEN;
                     }
                 })(), 
                 process.env.REACT_APP_ACAS_ENDPOINT,
                 {
                     onSuccess:function(){
+                        console.log("App initialize AcuantJavascriptWebSdk: onSuccess");
                         this.isInitialized = true;
                         this.isIntializing = false;
                         this.setState({
@@ -131,6 +106,7 @@ class App extends Component {
                     }.bind(this),
 
                     onFail: function(){
+                        console.log("App initialize AcuantJavascriptWebSdk: onFail");
                         this.isIntializing = false;
                         this.setState({
                             isAcuantSdkLoaded:true
@@ -139,35 +115,27 @@ class App extends Component {
                 }, 1);
         } 
     }
-
     render() {
-        if (!localStorage.getItem('acuantEula') && this.props.routerHistory.location.pathname !== "/eula") {
-            this.props.routerHistory.push("/eula")
-        } 
         
         return (
             <div className={'mainContent'}>
                 {
-                    this.state.isAcuantSdkLoaded && <Provider store={this.props.store}>
-                    <PersistGate loading={null} persistor={this.props.persistor}>
-                        <ConnectedRouter history={this.props.routerHistory}>
-                            <Switch>
-                                <Redirect exact from="/" to="/capture/photo"/>
-                                <Route path='/eula' exact component={EulaPage}/>
-                                <Route path="/capture/photo" exact component={CapturePhoto}/>
-                                <Route path="/capture/camera" exact component={AcuantReactCamera}/>
-                                <Route path="/photo/confirm" exact component={ProcessedImageResult} />
-                                <Route path="/capture/selfie" exact component={CaptureSelfie}/>
-                                <Route path='/results' component={Results}/>
-                                <Route path="/error" component={Error}/>
-                            </Switch>
-                        </ConnectedRouter>
-                    </PersistGate>
-                </Provider>
+                    this.state.isAcuantSdkLoaded && <div> Hello World </div>
                 }
             </div>
         );
     }
+
+    // render() {
+        
+    //     return (
+    //         <div className={'mainContent'}>
+    //             {
+    //                 this.state.isAcuantSdkLoaded && <CapturePhotoPlain />
+    //             }
+    //         </div>
+    //     );
+    // }
 }
 
 export default App;
